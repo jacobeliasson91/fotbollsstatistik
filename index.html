@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>⚽ Fotbollsstatistik</title>
+
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    body { margin:0; font-family: system-ui; background:#f3f4f6; }
+    .card { background:white; border-radius:16px; padding:16px; box-shadow:0 2px 6px rgba(0,0,0,.1); }
+    button { font-size:1.5rem; padding:12px 20px; border-radius:8px; }
+    button.primary { background:#2563eb; color:white; border:none; }
+    button.danger { background:#dc2626; color:white; border:none; font-size:.75rem; padding:6px 10px; }
+    input { font-size:1rem; padding:10px; width:100%; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+<script type="text/babel">
+const { useState, useEffect } = React;
+
+function App() {
+  const [stats, setStats] = useState({ teamA:{}, teamB:{} });
+  const [categories, setCategories] = useState(["Skott","Skott på mål","Hörnor","Frisparkar"]);
+  const [adding, setAdding] = useState(false);
+  const [newCat, setNewCat] = useState("");
+
+  useEffect(() => {
+    setStats(p => ({
+      teamA:Object.fromEntries(categories.map(k=>[k,p.teamA[k]??0])),
+      teamB:Object.fromEntries(categories.map(k=>[k,p.teamB[k]??0]))
+    }));
+  }, [categories]);
+
+  const inc = (t,k)=>setStats(p=>({...p,[t]:{...p[t],[k]:p[t][k]+1}}));
+  const dec = (t,k)=>setStats(p=>({...p,[t]:{...p[t],[k]:Math.max(0,p[t][k]-1)}}));
+
+  return (
+    <div style={{padding:16,maxWidth:720,margin:"auto"}}>
+      <h1 style={{textAlign:"center"}}>⚽ Fotbollsstatistik</h1>
+
+      <div style={{display:"flex",justifyContent:"space-between",fontWeight:"bold"}}>
+        <div style={{width:"33%",textAlign:"center"}}>HEMMA</div>
+        <div style={{width:"33%"}}></div>
+        <div style={{width:"33%",textAlign:"center"}}>BORTA</div>
+      </div>
+
+      {categories.map(k=>(
+        <div key={k} className="card" style={{marginTop:16}}>
+          <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <Team v={stats.teamA[k]} add={()=>inc("teamA",k)} sub={()=>dec("teamA",k)} />
+            <div style={{width:"33%",textAlign:"center"}}>
+              <strong>{k}</strong><br/>
+              <button className="danger" onClick={()=>setCategories(c=>c.filter(x=>x!==k))}>Ta bort</button>
+            </div>
+            <Team v={stats.teamB[k]} add={()=>inc("teamB",k)} sub={()=>dec("teamB",k)} />
+          </div>
+        </div>
+      ))}
+
+      <div style={{marginTop:24}}>
+        {!adding ? (
+          <button className="primary" style={{width:"100%"}} onClick={()=>setAdding(true)}>➕ Lägg till kategori</button>
+        ) : (
+          <div style={{display:"flex",gap:8}}>
+            <input value={newCat} onChange={e=>setNewCat(e.target.value)} placeholder="t.ex. Gula kort"/>
+            <button className="primary" onClick={()=>{
+              if(!newCat.trim()) return;
+              setCategories(c=>[...c,newCat.trim()]);
+              setNewCat(""); setAdding(false);
+            }}>Lägg till</button>
+            <button onClick={()=>setAdding(false)}>Avbryt</button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+const Team = ({v,add,sub}) => (
+  <div style={{width:"33%",textAlign:"center"}}>
+    <div style={{fontSize:"2rem",fontWeight:"bold"}}>{v}</div>
+    <div style={{display:"flex",justifyContent:"center",gap:8}}>
+      <button onClick={add} class="plus">+</button>
+      <button onClick={sub}>-</button>
+    </div>
+  </div>
+);
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
